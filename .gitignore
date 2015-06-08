@@ -1,0 +1,138 @@
+import tkinter
+
+
+n, m = 10, 10
+
+
+c = tkinter.Canvas(width = 50*m, height = 50*n)
+c.pack()
+
+matrix = []
+for i in range(n):
+	matrix.append([0]*m)
+
+const = 20
+
+def colour_square(a):
+	if a == 0:
+		a = 'white'
+	elif a == 1:
+		a = 'cyan'
+	elif a == 2:
+		a = 'steel blue'
+	elif a == 3:
+		a = 'blue'
+	return a
+
+
+def matrix_square(x, y, a):
+	global n, m, const
+	x *= const
+	y *= const
+	a = colour_square(a)
+	c.create_rectangle(x, y, x + const, y + const, outline = "black", fill = a)
+
+
+
+def print_matrix(matrix):
+	for i in range(len(matrix)):
+		print(matrix[i], end = '\n')
+	print('wellwellwell')
+def round1(i, n):
+	if i <= n//2:
+		return 0
+	else:
+		return n-1
+def check_counter(a):
+	if a > 0:
+		a = 1
+	return a
+def check_size():
+	global n, m, matrix
+	print('hello')
+	counter = 0
+	for i in range(n):
+		for k in range(m):
+			if matrix[i][k] >= 4:
+				print('cool', i, k)
+				if i == 0 or i == n-1 or k == 0 or k == m-1:
+					counter += 1
+
+	counter = check_counter(counter)
+	if counter == 1:
+		for p in range(n):
+			matrix[p].append(0)
+		for p in range(n):
+			matrix[p].insert(0, 0)
+		matrix.insert(0, [0]*(m + 2))
+		matrix.append([0]*(m+2))
+		m += 2
+		n += 2
+	print_matrix(matrix)
+	
+
+
+
+def push_sand():
+	global n, m, matrix
+	counter = 0
+	memento = None
+	for i in range(n):
+		for k in range(m):
+			if matrix[i][k] >= 4:
+				matrix[i][k] -= 4
+				matrix[i+1][k] += 1
+				matrix[i-1][k] += 1
+				matrix[i][k-1] += 1
+				matrix[i][k+1] += 1
+				counter += 1
+				memento = k
+				break
+		if memento != None:
+			break
+
+	print_matrix(matrix)
+	if counter == 0:
+		return False
+
+def push_sand2():
+	global n, m, matrix
+	pushed_sand = []
+	for i in range(n):
+		for k in range(m):
+			if matrix[i][k] >= 4:
+				pushed_sand.append([i, k])
+	for p in range(len(pushed_sand)):
+		i, k = pushed_sand[p][0], pushed_sand[p][1]
+		matrix[i][k] -= 4
+		matrix[i+1][k] += 1
+		matrix[i-1][k] += 1
+		matrix[i][k+1] += 1
+		matrix[i][k-1] += 1
+
+
+
+def keep_on_pushing():
+	global matrix
+	check_size()
+	counter = push_sand()
+	print(counter)
+	if counter != False:
+		keep_on_pushing()
+
+
+
+matrix[0][0] = 91
+matrix[0][9] = 91
+matrix[9][0] = 91
+matrix[9][9] = 91
+
+
+
+keep_on_pushing()
+
+for i in range(n):
+	for k in range(m):
+		matrix_square(k, i, matrix[i][k])
+
+c.mainloop()
