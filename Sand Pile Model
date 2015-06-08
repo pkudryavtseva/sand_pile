@@ -4,8 +4,6 @@ import tkinter
 n, m = 10, 10
 
 
-c = tkinter.Canvas(width = 50*m, height = 50*n)
-c.pack()
 
 matrix = []
 for i in range(n):
@@ -22,6 +20,8 @@ def colour_square(a):
 		a = 'steel blue'
 	elif a == 3:
 		a = 'blue'
+	else:
+		a = 'red'
 	return a
 
 
@@ -49,12 +49,12 @@ def check_counter(a):
 	return a
 def check_size():
 	global n, m, matrix
-	print('hello')
+	#print('hello')
 	counter = 0
 	for i in range(n):
 		for k in range(m):
 			if matrix[i][k] >= 4:
-				print('cool', i, k)
+				#print('cool', i, k)
 				if i == 0 or i == n-1 or k == 0 or k == m-1:
 					counter += 1
 
@@ -68,7 +68,7 @@ def check_size():
 		matrix.append([0]*(m+2))
 		m += 2
 		n += 2
-	print_matrix(matrix)
+	#print_matrix(matrix)
 	
 
 
@@ -91,17 +91,19 @@ def push_sand():
 		if memento != None:
 			break
 
-	print_matrix(matrix)
+	#print_matrix(matrix)
 	if counter == 0:
 		return False
 
 def push_sand2():
 	global n, m, matrix
 	pushed_sand = []
+	counter = 0
 	for i in range(n):
 		for k in range(m):
 			if matrix[i][k] >= 4:
 				pushed_sand.append([i, k])
+				counter += 1
 	for p in range(len(pushed_sand)):
 		i, k = pushed_sand[p][0], pushed_sand[p][1]
 		matrix[i][k] -= 4
@@ -109,30 +111,36 @@ def push_sand2():
 		matrix[i-1][k] += 1
 		matrix[i][k+1] += 1
 		matrix[i][k-1] += 1
+	if counter == 0:
+		return False
 
 
 
 def keep_on_pushing():
-	global matrix
-	check_size()
-	counter = push_sand()
-	print(counter)
-	if counter != False:
-		keep_on_pushing()
+	counter = None
+	while counter != False:
+		check_size()
+		#counter = push_sand()					#работает, но в разы медленнее, чем push_sand2()
+		counter = push_sand2()
 
 
 
-matrix[0][0] = 91
-matrix[0][9] = 91
-matrix[9][0] = 91
-matrix[9][9] = 91
+matrix[0][0] = 1000
+matrix[0][9] = 1000
+matrix[9][0] = 1000
+matrix[9][9] = 1000
 
 
 
 keep_on_pushing()
 
+c = tkinter.Canvas(width = 50*m, height = 50*n)
+c.pack()
+
 for i in range(n):
 	for k in range(m):
 		matrix_square(k, i, matrix[i][k])
+
+
 
 c.mainloop()
