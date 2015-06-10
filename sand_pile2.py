@@ -4,12 +4,32 @@ import time
 n, m = 10, 10 				#n - row and height , m - column and width!!!
 n, m = map(int, input().split())
 
+colorconst = 2
+
+VELOCITY = 100
+
+COLORS = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
+
+number_of_pushings = 0
 
 matrix = []
 for i in range(n):
 	matrix.append([0]*m)
 
-#sandy = 0
+CHECK_FOR_STOPPING_THE_LOOP = None
+
+sandy = 0
+
+
+def convert_from_hex_to_de(a):				
+	global COLORS
+	hexad = ''
+	while a > 0:
+		hexad = COLORS[a%16] + hexad
+		a //= 16
+	return hexad
+
+
 
 def add_sand(event):
 	global WIDTH, HEIGHT, m, n, matrix, sandy
@@ -29,8 +49,7 @@ def add_sand(event):
 		#	sandy = text.get('1.0', END)
 		#root.bind('<Button-3>', get_sand)
 		#print(sandy)
-		sand = int(input())
-		matrix[y][x] += sand
+		matrix[y][x] += sandy
 		matrix_square(x, y, matrix[y][x])
 
 def remove_sand(event):
@@ -47,25 +66,38 @@ def remove_sand(event):
 		matrix_square(x, y, matrix[y][x])
 
 def remove_all(event):
-	global WIDTH, HEIGHT, m, n, matrix
+	global WIDTH, HEIGHT, m, n, matrix, number_of_pushings
 	for i in range(n):
 		for k in range(m):
 			matrix[i][k] = 0
+	number_of_pushings = 0
 	draw_matrix()
 
 def colour_square(a):
-	if a == 0:
-		a = 'white'
-	elif a == 1:
-		a = 'cyan'
-	elif a == 2:
-		a = 'steel blue'
-	elif a == 3:
-		a = 'blue'
-	else:
-		a = 'red'
-	return a
-
+	global colorconst, COLORS
+	mycolor = '#'
+	#a *= 32000
+	color = a
+	a //= colorconst
+	a = 255 - a
+	a = convert_from_hex_to_de(a)
+	while len(a) < 2:
+		a = '0' + a
+	a *= 3
+	#while len(a) < 6:
+	#	a += 'f' 
+	mycolor += a[:6]
+	#if a == 0:
+	#	a = 'white'
+	if color == 1:
+		mycolor = 'cyan'
+	elif color == 2:
+		mycolor = 'steel blue'
+	elif color == 3:
+		mycolor = 'blue'
+	elif color == 4:
+		mycolor = 'red'
+	return mycolor
 
 def matrix_square(x, y, a):
 	global n, m, const, WIDTH, HEIGHT
@@ -76,32 +108,32 @@ def matrix_square(x, y, a):
 	a = colour_square(a)
 	c.create_rectangle(x, y, x + const, y + const, outline = "black", fill = a)
 
-
-
 def print_matrix(matrix):
 	for i in range(len(matrix)):
 		print(matrix[i], end = '\n')
 	print('wellwellwell')
+
 def round1(i, n):
 	if i <= n//2:
 		return 0
 	else:
 		return n-1
+
 def check_counter(a):
 	if a > 0:
 		a = 1
 	return a
+
 def check_size():
 	global n, m, matrix
 	#print('hello')
 	counter = 0
 	for i in range(n):
-		for k in range(m):
+		for k in range(m): 
 			if matrix[i][k] >= 4:
 				#print('cool', i, k)
 				if i == 0 or i == n-1 or k == 0 or k == m-1:
 					counter += 1
-
 	counter = check_counter(counter)
 	if counter == 1:
 		for p in range(n):
@@ -114,9 +146,6 @@ def check_size():
 		n += 2
 	#print_matrix(matrix)
 	
-
-
-
 def push_sand():
 	global n, m, matrix
 	counter = 0
@@ -140,7 +169,7 @@ def push_sand():
 		return False
 
 def push_sand2():
-	global n, m, matrix
+	global n, m, matrix, number_of_pushings
 	pushed_sand = []
 	counter = 0
 	for i in range(n):
@@ -155,46 +184,87 @@ def push_sand2():
 		matrix[i-1][k] += 1
 		matrix[i][k+1] += 1
 		matrix[i][k-1] += 1
+	number_of_pushings += counter
 	if counter == 0:
 		return False
 
-
-
-
 def draw_matrix():
-	global matrix
+	global matrix, n, m
 	c.delete(*c.find_all())
 	for i in range(n):
 		for k in range(m):
 			matrix_square(k, i, matrix[i][k])
 
-def keep_on_pushing(event):
-	counter = None
-	while counter != False:
-		draw_matrix()
-		check_size()
-		#counter = push_sand()					#работает, но в разы медленнее, чем push_sand2()
-		counter = push_sand2()
+def keep_on_pushing():
+	global CHECK_FOR_STOPPING_THE_LOOP, number_of_pushings
+	renew_const()
+	draw_matrix()
+	check_size()
+#	if CHECK_FOR_STOPPING_THE_LOOP == False:
+#		CHECK_FOR_STOPPING_THE_LOOP = None
+#		break
+	#counter = push_sand()					#работает, но в разы медленнее, чем push_sand2()
+	push_sand2()
+	#print(number_of_pushings)
+	c.after(VELOCITY, keep_on_pushing)
 
 
-WIDTH = 100*m
-HEIGHT = 100*n
-const = 20 - (n + m)//4
-c = Canvas(width = WIDTH, height = HEIGHT)
 
 
+#def stop_the_loop(event):
+#	global CHECK_FOR_STOPPING_THE_LOOP
+#	CHECK_FOR_STOPPING_THE_LOOP = False
 
+
+def loop(event):
+	keep_on_pushing()
+
+
+def renew_const():
+	global n, m, const
+	const = 500//(max(m,n))
+
+def draw_colors():
+	global colorconst
+	for i in range(0, 255*colorconst, 5):
+		#print(colour_square(i))
+		anotherc.create_rectangle(0, i, 20, i+5, fill = colour_square(i))
+
+const = 500//(max(m,n))
+
+WIDTH = (m+1)*const
+HEIGHT = (n+1)*const
 
 root = Tk()
-but = Button(root, text="SAND", width = 30,height = 5, bg="white",fg="black") 
-but.pack()
+c = Canvas(root, width = WIDTH, height = HEIGHT)
+anotherc = Canvas(root, width = 20, height = 255*colorconst)
+but = Button(root, text = "PUSH SAND", width = 30,height = 5, bg="white",fg = "black") 
+but2 = Button(root, text = "STOP", width = 30,height = 5, bg="white",fg = "black")
+
+
 draw_matrix()
+draw_colors()
 c.bind("<Button-1>", add_sand)
 c.bind('<Button-3>', remove_sand)
-root.bind('<Button-1>', keep_on_pushing)
-root.bind('<Button-3>', remove_all)
+but.bind('<Button-1>', loop)
+but.bind('<Button-3>', remove_all)
+#but2.bind('<Button-1>', stop_the_loop)
 
+def getV(root):
+	global sandy
+	a = scale1.get()
+	sandy = a
+	print("Текущее значение количества песчинок:", a) 
+scale1 = Scale(root, orient=VERTICAL, length=510, from_=0, to=510, tickinterval = 50, resolution = 5)
+button1 = Button(root, text="New sand number")
 
+button1.bind("<Button-1>",getV)
 
+#but2.pack(side = 'left')
+anotherc.pack(side = 'right')
+scale1.pack(side = 'right')
+button1.pack(side = 'right')
+but.pack()
 c.pack()
-c.mainloop()
+
+root.mainloop()
