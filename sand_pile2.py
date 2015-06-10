@@ -20,7 +20,6 @@ CHECK_FOR_STOPPING_THE_LOOP = None
 
 sandy = 0
 
-
 def convert_from_hex_to_de(a):				
 	global COLORS
 	hexad = ''
@@ -147,7 +146,8 @@ def check_size():
 	#print_matrix(matrix)
 	
 def push_sand():
-	global n, m, matrix
+	global n, m, matrix, CHECK_FOR_STOPPING_THE_LOOP
+
 	counter = 0
 	memento = None
 	for i in range(n):
@@ -166,11 +166,13 @@ def push_sand():
 
 	#print_matrix(matrix)
 	if counter == 0:
-		return False
+		CHECK_FOR_STOPPING_THE_LOOP = False
+
 
 def push_sand2():
-	global n, m, matrix, number_of_pushings
+	global n, m, matrix, number_of_pushings, CHECK_FOR_STOPPING_THE_LOOP
 	pushed_sand = []
+	timea = time.clock()
 	counter = 0
 	for i in range(n):
 		for k in range(m):
@@ -184,9 +186,11 @@ def push_sand2():
 		matrix[i-1][k] += 1
 		matrix[i][k+1] += 1
 		matrix[i][k-1] += 1
+	timeb = time.clock()
 	number_of_pushings += counter
+	print(timeb-timea)
 	if counter == 0:
-		return False
+		CHECK_FOR_STOPPING_THE_LOOP = False
 
 def draw_matrix():
 	global matrix, n, m
@@ -195,28 +199,34 @@ def draw_matrix():
 		for k in range(m):
 			matrix_square(k, i, matrix[i][k])
 
+
+
 def keep_on_pushing():
 	global CHECK_FOR_STOPPING_THE_LOOP, number_of_pushings
 	renew_const()
 	draw_matrix()
-	check_size()
-#	if CHECK_FOR_STOPPING_THE_LOOP == False:
-#		CHECK_FOR_STOPPING_THE_LOOP = None
+	
+	if CHECK_FOR_STOPPING_THE_LOOP != False:
+		check_size()
+		push_sand2()
 #		break
 	#counter = push_sand()					#работает, но в разы медленнее, чем push_sand2()
-	push_sand2()
 	#print(number_of_pushings)
 	c.after(VELOCITY, keep_on_pushing)
 
 
 
 
-#def stop_the_loop(event):
-#	global CHECK_FOR_STOPPING_THE_LOOP
-#	CHECK_FOR_STOPPING_THE_LOOP = False
+def stop_the_loop(event):
+	global CHECK_FOR_STOPPING_THE_LOOP
+	if CHECK_FOR_STOPPING_THE_LOOP == None:
+		CHECK_FOR_STOPPING_THE_LOOP = False
+	else:
+		CHECK_FOR_STOPPING_THE_LOOP = None
 
 
 def loop(event):
+	CHECK_FOR_STOPPING_THE_LOOP = None
 	keep_on_pushing()
 
 
@@ -248,7 +258,7 @@ c.bind("<Button-1>", add_sand)
 c.bind('<Button-3>', remove_sand)
 but.bind('<Button-1>', loop)
 but.bind('<Button-3>', remove_all)
-#but2.bind('<Button-1>', stop_the_loop)
+but2.bind('<Button-1>', stop_the_loop)
 
 def getV(root):
 	global sandy
@@ -260,7 +270,7 @@ button1 = Button(root, text="New sand number")
 
 button1.bind("<Button-1>",getV)
 
-#but2.pack(side = 'left')
+but2.pack(side = 'left')
 anotherc.pack(side = 'right')
 scale1.pack(side = 'right')
 button1.pack(side = 'right')
