@@ -20,15 +20,7 @@ CHECK_FOR_STOPPING_THE_LOOP = None
 
 sandy = 0
 
-def convert_from_hex_to_de(a):				
-	global COLORS
-	hexad = ''
-	while a > 0:
-		hexad = COLORS[a%16] + hexad
-		a //= 16
-	return hexad
-
-
+#ФУНКЦИИ ДОБАВЛЕНИЯ/УБИРАНИЯ ПЕСКА
 
 def add_sand(event):
 	global WIDTH, HEIGHT, m, n, matrix, sandy
@@ -72,6 +64,22 @@ def remove_all(event):
 	number_of_pushings = 0
 	draw_matrix()
 
+def getV(root):
+	global sandy
+	a = scale1.get()
+	sandy = a
+	print("Текущее значение количества песчинок:", a)
+
+#ФУНКЦИИ РИСОВАНИЯ МАТРИЦЫ
+
+def convert_from_hex_to_de(a):				
+	global COLORS
+	hexad = ''
+	while a > 0:
+		hexad = COLORS[a%16] + hexad
+		a //= 16
+	return hexad
+
 def colour_square(a):
 	global colorconst, COLORS
 	mycolor = '#'
@@ -107,32 +115,26 @@ def matrix_square(x, y, a):
 	a = colour_square(a)
 	c.create_rectangle(x, y, x + const, y + const, outline = "black", fill = a)
 
-def print_matrix(matrix):
-	for i in range(len(matrix)):
-		print(matrix[i], end = '\n')
-	print('wellwellwell')
+def draw_matrix():
+	global matrix, n, m
+	c.delete(*c.find_all())
+	for i in range(n):
+		for k in range(m):
+			matrix_square(k, i, matrix[i][k])
 
-def round1(i, n):
-	if i <= n//2:
-		return 0
-	else:
-		return n-1
-
-def check_counter(a):
-	if a > 0:
-		a = 1
-	return a
+#ФУНКЦИИ РАССЫПАНИЯ ПЕСКА
 
 def check_size():
 	global n, m, matrix
 	#print('hello')
 	counter = 0
 	for i in range(n):
-		for k in range(m): 
-			if matrix[i][k] >= 4:
-				#print('cool', i, k)
-				if i == 0 or i == n-1 or k == 0 or k == m-1:
-					counter += 1
+		if matrix[i][0] >= 4 or matrix[i][m-1] >= 4:
+			#print('cool', i, k)
+			counter += 1
+	for k in range(m):
+		if matrix[0][k] >= 4 or matrix[n-1][k] >= 4:
+			counter += 1
 	counter = check_counter(counter)
 	if counter == 1:
 		for p in range(n):
@@ -144,10 +146,14 @@ def check_size():
 		m += 2
 		n += 2
 	#print_matrix(matrix)
+
+def check_counter(a):
+	if a > 0:
+		a = 1
+	return a
 	
 def push_sand():
 	global n, m, matrix, CHECK_FOR_STOPPING_THE_LOOP
-
 	counter = 0
 	memento = None
 	for i in range(n):
@@ -167,7 +173,6 @@ def push_sand():
 	#print_matrix(matrix)
 	if counter == 0:
 		CHECK_FOR_STOPPING_THE_LOOP = False
-
 
 def push_sand2():
 	global n, m, matrix, number_of_pushings, CHECK_FOR_STOPPING_THE_LOOP
@@ -192,14 +197,30 @@ def push_sand2():
 	if counter == 0:
 		CHECK_FOR_STOPPING_THE_LOOP = False
 
-def draw_matrix():
-	global matrix, n, m
-	c.delete(*c.find_all())
-	for i in range(n):
-		for k in range(m):
-			matrix_square(k, i, matrix[i][k])
+#ДОПФУНКЦИИ
 
+def print_matrix(matrix):
+	for i in range(len(matrix)):
+		print(matrix[i], end = '\n')
+	print('wellwellwell')
 
+def renew_const():
+	global n, m, const
+	const = 500//(max(m,n))
+
+def draw_colors():
+	global colorconst
+	for i in range(0, 255*colorconst, 5):
+		#print(colour_square(i))
+		anotherc.create_rectangle(0, i, 20, i+5, fill = colour_square(i))
+
+#def round1(i, n):
+#	if i <= n//2:
+#		return 0
+#	else:
+#		return n-1
+
+#ФУНКЦИИ ЗАЦИКЛИВАНИЯ
 
 def keep_on_pushing():
 	global CHECK_FOR_STOPPING_THE_LOOP, number_of_pushings
@@ -214,9 +235,6 @@ def keep_on_pushing():
 	#print(number_of_pushings)
 	c.after(VELOCITY, keep_on_pushing)
 
-
-
-
 def stop_the_loop(event):
 	global CHECK_FOR_STOPPING_THE_LOOP
 	if CHECK_FOR_STOPPING_THE_LOOP == None:
@@ -224,21 +242,10 @@ def stop_the_loop(event):
 	else:
 		CHECK_FOR_STOPPING_THE_LOOP = None
 
-
 def loop(event):
 	CHECK_FOR_STOPPING_THE_LOOP = None
 	keep_on_pushing()
 
-
-def renew_const():
-	global n, m, const
-	const = 500//(max(m,n))
-
-def draw_colors():
-	global colorconst
-	for i in range(0, 255*colorconst, 5):
-		#print(colour_square(i))
-		anotherc.create_rectangle(0, i, 20, i+5, fill = colour_square(i))
 
 const = 500//(max(m,n))
 
@@ -251,20 +258,15 @@ anotherc = Canvas(root, width = 20, height = 255*colorconst)
 but = Button(root, text = "PUSH SAND", width = 30,height = 5, bg="white",fg = "black") 
 but2 = Button(root, text = "STOP", width = 30,height = 5, bg="white",fg = "black")
 
-
 draw_matrix()
 draw_colors()
+
 c.bind("<Button-1>", add_sand)
 c.bind('<Button-3>', remove_sand)
 but.bind('<Button-1>', loop)
 but.bind('<Button-3>', remove_all)
 but2.bind('<Button-1>', stop_the_loop)
 
-def getV(root):
-	global sandy
-	a = scale1.get()
-	sandy = a
-	print("Текущее значение количества песчинок:", a) 
 scale1 = Scale(root, orient=VERTICAL, length=510, from_=0, to=510, tickinterval = 50, resolution = 5)
 button1 = Button(root, text="New sand number")
 
