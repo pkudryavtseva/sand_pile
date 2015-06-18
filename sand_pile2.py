@@ -2,41 +2,50 @@ from tkinter import *
 import time
 import random
 
-n, m = 10, 10 				#n - row and height , m - column and width!!!
-n, m = map(int, input().split())
+ 				#n - row and height , m - column and width!!!
+mode = None
+while mode != 1 and mode != 2:
+		print('Введите режим работы, 1 для рассыпания песка, 2 для проверки случайного пересыпания:')
+		mode = int(input())
+n, m = 0, 0
+while  n < 10 or m < 10 or n > 100 or m > 100:
+		print('Введите количество столбцов и строк через пробел в 1 строку (от 10 до 100):')
+		try:
+			n, m = map(int, input().split())
+		except:
+			n,m = 0,0
 
-randomn = n
-randomm = m
+first_n = n
+first_m = m
+
+
 
 colorconst = 2
 
-VELOCITY = 100
+VELOCITY = 1
 
 COLORS = ['0','1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
 number_of_pushings = 0
-number_of_random_pushings = 0
 
 matrix = []
 for i in range(n):
 	matrix.append([0]*m)
-random_matrix = []
-for i in range(n):
-	random_matrix.append([0]*m)
 
-WANT_TO_CHECK_RANDOM_PUSHING = False
-CHECK_FOR_STOPPING_THE_LOOP = None
+
+CHECK_FOR_STOPPING_THE_LOOP = False
 CHECK_FOR_STOPPING_THE_RANDOM_LOOP = None
 PUSHES_PER_DRAWING = 1
 total_sand = 0
-sandy = 0
+sandy = 100
+print("Текущее значение количества песчинок: 10")
 
-random_pushing_matrix = None
+
 
 #ФУНКЦИИ ДОБАВЛЕНИЯ/УБИРАНИЯ ПЕСКА
 
 def add_sand(event):					#добавляет песок в клетки по щелчку левой кнопкой мыши
-	global WIDTH, HEIGHT, m, n, matrix, sandy, total_sand, WANT_TO_CHECK_RANDOM_PUSHING
+	global WIDTH, HEIGHT, m, n, matrix, sandy, total_sand
 	c = event.widget
 	x = event.x
 	y = event.y
@@ -53,14 +62,16 @@ def add_sand(event):					#добавляет песок в клетки по щ�
 		#	sandy = text.get('1.0', END)
 		#root.bind('<Button-3>', get_sand)
 		#print(sandy)
-		if WANT_TO_CHECK_RANDOM_PUSHING == True:
+		if mode == 2:
 			random_matrix[y][x] += sandy
+			matrix_square(x, y, random_matrix[y][x], random_c)
 		matrix[y][x] += sandy
 		total_sand += sandy
-		matrix_square(x, y, matrix[y][x])
+		matrix_square(x, y, matrix[y][x], c)
+		
 
 def remove_sand(event):					#убирает песок из клетки по щелчку правой кнопкой мыши
-	global WIDTH, HEIGHT, m, n, matrix, total_sand, WANT_TO_CHECK_RANDOM_PUSHING
+	global WIDTH, HEIGHT, m, n, matrix, total_sand, random_matrix
 	c = event.widget
 	x = event.x 
 	y = event.y 
@@ -69,22 +80,39 @@ def remove_sand(event):					#убирает песок из клетки по щ
 	x = int(x) - 1
 	y = int(y) - 1
 	if x < m and y < n:
-		if WANT_TO_CHECK_RANDOM_PUSHING == True:
-			random_matrix[y][x] = 0
 		total_sand -= matrix[y][x]
 		matrix[y][x] = 0
-		matrix_square(x, y, matrix[y][x])
+		if mode == 2:
+			random_matrix[x][y] = 0
+		matrix_square(x, y, matrix[y][x], c)
 
 def remove_all(event):
-	global WIDTH, HEIGHT, m, n, matrix, number_of_pushings, total_sand, WANT_TO_CHECK_RANDOM_PUSHING
-	for i in range(n):
-		for k in range(m):
-			if WANT_TO_CHECK_RANDOM_PUSHING == True:
-				matrix[i][k] = 0
-			matrix[i][k] = 0
+	global WIDTH, HEIGHT, m, n, matrix, number_of_pushings, total_sand, mode, first_m, first_n, const, random_matrix, randomm, randomn, CHECK_FOR_STOPPING_THE_LOOP
+	if mode == 2:
+		global but
 	number_of_pushings = 0
 	total_sand = 0
-	draw_matrix()
+	n = first_n
+	m = first_m
+	matrix = []
+	for i in range(n):
+		matrix.append([0]*m)
+	const = 500//(max(m,n))
+	WIDTH = (m+1)*const
+	HEIGHT = (n+1)*const
+	draw_matrix(matrix, first_n, first_m, c)
+	if mode == 2:
+		random_matrix = []
+		randomn = first_n
+		randomm = first_m
+		for i in range(randomn):
+			random_matrix.append([0]*randomm)
+
+		draw_matrix(random_matrix, first_n, first_m, random_c)
+		if CHECK_FOR_STOPPING_THE_LOOP != False:
+			but = Button(root, text = "PUSH SAND", bg="white",fg = "black") 
+			but.bind('<Button-1>', loop)
+			but.pack(side = 'top')
 
 def getV(root):
 	global sandy
@@ -102,7 +130,7 @@ def convert_from_hex_to_de(a):
 		a //= 16
 	return hexad
 
-def colour_square(a):
+def colour_square(a):		#по данному числу определяет цвет, который ему сопоставляется
 	global colorconst, COLORS
 	mycolor = '#'
 	#a *= 32000
@@ -128,7 +156,7 @@ def colour_square(a):
 		mycolor = 'red'
 	return mycolor
 
-def matrix_square(x, y, a):
+def matrix_square(x, y, a, c):		#рисует одну клетку решеткия, используя столбец и строку клетки в матрице, значение это клетки и холст, на котором нужно рисовать
 	global n, m, const, WIDTH, HEIGHT
 	x += 1
 	y += 1
@@ -137,12 +165,11 @@ def matrix_square(x, y, a):
 	a = colour_square(a)
 	c.create_rectangle(x, y, x + const, y + const, outline = "black", fill = a)
 
-def draw_matrix():
-	global matrix, n, m
+def draw_matrix(matrix, n, m, c):		#рисует всю решетку
 	c.delete(*c.find_all())
 	for i in range(n):
 		for k in range(m):
-			matrix_square(k, i, matrix[i][k])
+			matrix_square(k, i, matrix[i][k], c)
 
 def get_pushed(root):
 	global PUSHES_PER_DRAWING
@@ -233,9 +260,9 @@ def print_matrix(matrix):
 		print(matrix[i], end = '\n')
 	print('wellwellwell')
 
-def renew_const():
-	global n, m, const
+def renew_const(const, n, m):
 	const = 500//(max(m,n))
+	return const
 
 def draw_colors():
 	global colorconst
@@ -245,7 +272,9 @@ def draw_colors():
 
 def print_number_of_pushings(event):
 	global number_of_pushings, number_of_random_pushings
-	number_of_pushings_button['text'] = 'Number of pushings: ' + str(number_of_pushings) + '; number of random pushings: ' + str(number_of_random_pushings)
+	number_of_pushings_button['text'] = 'Number of pushings: ' + str(number_of_pushings)
+	if mode == 2:
+		number_of_pushings_button['text'] += '; number of random pushings:' + str(number_of_random_pushings)
 
 #def round1(i, n):
 #	if i <= n//2:
@@ -255,58 +284,102 @@ def print_number_of_pushings(event):
 
 #ФУНКЦИИ ЗАЦИКЛИВАНИЯ
 
-def keep_on_pushing():
-	global CHECK_FOR_STOPPING_THE_LOOP,CHECK_FOR_STOPPING_THE_RANDOM_LOOP, number_of_pushings, PUSHES_PER_DRAWING, matrix, random_matrix, n, m, randomn, randomm
-	renew_const()
-	draw_matrix()
-	if CHECK_FOR_STOPPING_THE_LOOP != False:
-		for i in range(PUSHES_PER_DRAWING):
+def push_once(event):
+	global CHECK_FOR_STOPPING_THE_LOOP,CHECK_FOR_STOPPING_THE_RANDOM_LOOP, const, number_of_pushings, PUSHES_PER_DRAWING, matrix, random_matrix, n, m, randomn, randomm
+	matrix, n, m = check_size(matrix, n, m)
+	push_sand2()
+	check_the_stop_button()
+	const = renew_const(const, n, m)
+	draw_matrix(matrix, n, m, c)
+	change_button()
+	CHECK_FOR_STOPPING_THE_LOOP = False
+
+def keep_on_pushing():		#зацикливает пересыпание песка
+	global VELOCITY, mode, CHECK_FOR_STOPPING_THE_LOOP,CHECK_FOR_STOPPING_THE_RANDOM_LOOP, number_of_pushings, PUSHES_PER_DRAWING, matrix, random_matrix, n, m, randomn, randomm, mode, const
+
+	for i in range(PUSHES_PER_DRAWING):
+		if CHECK_FOR_STOPPING_THE_LOOP != False:
 			matrix, n, m = check_size(matrix, n, m)
 			push_sand2()
+		else:
+			break
+	const = renew_const(const, n, m)
+	draw_matrix(matrix, n, m, c)
+#	if CHECK_FOR_STOPPING_THE_RANDOM_LOOP != False:
+#		button_for_checking_random_pushing['text'] = 'Being checked'
+#		random_matrix, randomn, randomm = check_size(random_matrix, randomn, randomm)
+#		random_push_sand()
+#	elif CHECK_FOR_STOPPING_THE_LOOP == False:
+#		the_truth = check_if_they_are_the_same()
+#		if the_truth == True:
+#			button_for_checking_random_pushing['text'] = 'THEY ARE TOTALLY THE SAME'
+#		else:
+#			button_for_checking_random_pushing['text'] = 'THEY ARE DIFFERENT! nooooo'	
+#			break
+	#counter = push_sand()					#работает, но в разы медленнее, чем push_sand2()
+	#print(number_of_pushings)
+	if mode == 1:
+		check_the_stop_button()
+		change_button()
+	if CHECK_FOR_STOPPING_THE_LOOP != False:
+		c.after(VELOCITY, keep_on_pushing)
+	elif mode == 2:
+		but = Button(root, text = "FINISHED", bg="white",fg = "black") 
+		but.pack(side = 'top')
+		VELOCITY = 1
+		keep_on_random_pushing()
+
+def check_the_stop_button():
+	global CHECK_FOR_STOPPING_THE_LOOP
+	if CHECK_FOR_STOPPING_THE_LOOP == False:
+		but['text'] = 'PUSH SAND'
+	else:
+		but['text'] = 'STOP'
+
+def change_button():
+	if CHECK_FOR_STOPPING_THE_LOOP == None:
+		but.bind('<Button-1>', stop_the_loop)
+	else:
+		but.bind('<Button-1>', loop)
+
+def stop_the_loop(event):
+	global CHECK_FOR_STOPPING_THE_LOOP#, CHECK_FOR_STOPPING_THE_RANDOM_LOOP
+	if CHECK_FOR_STOPPING_THE_LOOP == None:
+		CHECK_FOR_STOPPING_THE_LOOP = False
+	else:
+		CHECK_FOR_STOPPING_THE_LOOP = None
+	#if CHECK_FOR_STOPPING_THE_RANDOM_LOOP == None:
+	#	CHECK_FOR_STOPPING_THE_RANDOM_LOOP = False
+	#else:
+	#	CHECK_FOR_STOPPING_THE_RANDOM_LOOP = None
+
+def loop(event):		#зацикливает пересыпания песка
+	global CHECK_FOR_STOPPING_THE_LOOP, mode
+	CHECK_FOR_STOPPING_THE_LOOP = None
+	but.bind('<Button-1>', stop_the_loop)
+	keep_on_pushing()
+	if mode == 2:
+		but.destroy()
+
+#RANDOMISING
+
+def keep_on_random_pushing():		#зацикливает случайные пересыпания
+	global randomn, randomm, random_matrix, number_of_random_pushings, CHECK_FOR_STOPPING_THE_RANDOM_LOOP, random_const
+	random_const = renew_const(random_const, randomn, randomm)
+	random_matrix, randomn, randomm = check_size(random_matrix, randomn, randomm)
+	random_push_sand()
+	random_const = renew_const(random_const, randomn, randomm)
+	draw_matrix(random_matrix, randomn, randomm, random_c)
 	if CHECK_FOR_STOPPING_THE_RANDOM_LOOP != False:
-		button_for_checking_random_pushing['text'] = 'Being checked'
-		random_matrix, randomn, randomm = check_size(random_matrix, randomn, randomm)
-		random_push_sand()
-	elif CHECK_FOR_STOPPING_THE_LOOP == False:
+		random_c.after(VELOCITY, keep_on_random_pushing)
+	else:
 		the_truth = check_if_they_are_the_same()
 		if the_truth == True:
 			button_for_checking_random_pushing['text'] = 'THEY ARE TOTALLY THE SAME'
 		else:
 			button_for_checking_random_pushing['text'] = 'THEY ARE DIFFERENT! nooooo'
-	
-#			break
-	#counter = push_sand()					#работает, но в разы медленнее, чем push_sand2()
-	#print(number_of_pushings)
-	check_the_stop_button()
-	c.after(VELOCITY, keep_on_pushing)
 
-def check_the_stop_button():
-	global CHECK_FOR_STOPPING_THE_LOOP
-	if CHECK_FOR_STOPPING_THE_LOOP == False:
-		but2['text'] = 'START'
-	else:
-		but2['text'] = 'STOP'
-
-
-def stop_the_loop(event):
-	global CHECK_FOR_STOPPING_THE_LOOP, CHECK_FOR_STOPPING_THE_RANDOM_LOOP
-	if CHECK_FOR_STOPPING_THE_LOOP == None:
-		CHECK_FOR_STOPPING_THE_LOOP = False
-	else:
-		CHECK_FOR_STOPPING_THE_LOOP = None
-	if CHECK_FOR_STOPPING_THE_RANDOM_LOOP == None:
-		CHECK_FOR_STOPPING_THE_RANDOM_LOOP = False
-	else:
-		CHECK_FOR_STOPPING_THE_RANDOM_LOOP = None
-
-def loop(event):
-	CHECK_FOR_STOPPING_THE_LOOP = None
-
-	keep_on_pushing()
-
-#RANDOMISING
-
-def random_push_sand():
+def random_push_sand():			#осуществляет одно случайное пересыпание
 	global randomn, randomm, random_matrix, number_of_random_pushings, CHECK_FOR_STOPPING_THE_RANDOM_LOOP
 	pushed_sand = []
 	#timea = time.clock()
@@ -317,7 +390,7 @@ def random_push_sand():
 				pushed_sand.append([i, k])
 				#counter += 1
 	if len(pushed_sand) != 0:
-		pushing_this_one = random.randint(0, len(pushed_sand)- 1)
+		pushing_this_one = random.randint(0, len(pushed_sand) - 1)
 		#print(pushed_sand, pushing_this_one)
 		i, k = pushed_sand[pushing_this_one][0], pushed_sand[pushing_this_one][1]
 		random_matrix[i][k] -= 4
@@ -332,7 +405,7 @@ def random_push_sand():
 	elif len(pushed_sand) == 0:
 		CHECK_FOR_STOPPING_THE_RANDOM_LOOP = False
 
-def check_if_they_are_the_same():
+def check_if_they_are_the_same():		#проверка того, что конечные состояния совпадают
 	global matrix, random_matrix, number_of_pushings, number_of_random_pushings
 	ret = True
 	if len(matrix) == len(random_matrix):
@@ -348,69 +421,122 @@ def check_if_they_are_the_same():
 	return ret
 
 
-def randomize_it(event):
-	global WANT_TO_CHECK_RANDOM_PUSHING, CHECK_FOR_STOPPING_THE_RANDOM_LOOP, matrix, random_matrix
-	#random_matrix = matrix
-	button_for_checking_random_pushing['text'] = 'Being checked'
-	WANT_TO_CHECK_RANDOM_PUSHING = True
-	CHECK_FOR_STOPPING_THE_RANDOM_LOOP = True
+def pack_for_just_doing_it():			#функция, создающая окно для визуализации пересыпания
+	#BUTTONS SCALES CANVAS
+	global root, c, anotherc, but, but_clear, scale1, pushes_scale, button1, pushes_button, number_of_pushings_button, matrix, n, m, CHECK_FOR_STOPPING_THE_RANDOM_LOOP, CHECK_FOR_STOPPING_THE_LOOP
+	global WIDTH, HEIGHT, const
+	const = 500//(max(m,n))
+	WIDTH = (m+1)*const
+	HEIGHT = (n+1)*const
+	root = Tk()
+	c = Canvas(root, width = WIDTH, height = HEIGHT)
+	anotherc = Canvas(root, width = 20, height = 255*colorconst)
+	but = Button(root, text = "PUSH SAND", bg="white",fg = "black") 
+	but_clear = Button(root, text = "CLEAR", bg="white",fg = "black")
+	scale1 = Scale(root, orient=VERTICAL, length=510, from_=0, to=510, tickinterval = 50, resolution = 5)
+	pushes_scale = Scale(root, orient=HORIZONTAL, length=500, from_=1, to = 100, tickinterval = 10, resolution = 1)
+	button1 = Button(root, text="Change sand number", bg="white",fg = "black")
+	pushes_button = Button(root, text = 'Change pushes speed', bg="white",fg = "black")
+	number_of_pushings_button = Button(root, text = 'Number of pushings: 0', bg="white",fg = "black")
+	#button_for_checking_random_pushing = Button(root, text = 'I want to check random pushing', bg="white",fg = "black")
+
+	#BINDING
+
+	c.bind("<Button-1>", add_sand)
+	c.bind('<Button-3>', remove_sand)
+	but.bind('<Button-1>', loop)
+	but.bind('<Button-3>', push_once)
+	but_clear.bind('<Button-1>', remove_all)
+	pushes_button.bind('<Button-1>', get_pushed)
+	button1.bind("<Button-1>",getV)
+	number_of_pushings_button.bind('<Button-1>', print_number_of_pushings)
+	#button_for_checking_random_pushing.bind('<Button-1>', randomize_it)
+
+	#PACKING
+
+	but_clear.pack(side = 'left')
+	but.pack(side = 'left')
+	anotherc.pack(side = 'right')
+	scale1.pack(side = 'right')
+	button1.pack(side = 'right')
+	pushes_scale.pack(side = 'bottom')
+	pushes_button.pack(side = 'bottom')
+	#button_for_checking_random_pushing.pack()
+	number_of_pushings_button.pack()
+	c.pack(side = 'top')
+
+	draw_matrix(matrix, n, m, c)
+	draw_colors()
+
+	root.mainloop()
 
 
-const = 500//(max(m,n))
+def pack_for_checking_random():			#функция, создающая два окна, в одном из них визуализируется случайное пересыпание, в другом - обычное
+	#BUTTONS SCALES CANVAS FOR IT
+	global root, c, anotherc, but, but_clear, scale1, pushes_scale, button1, pushes_button, number_of_pushings_button, random_root, random_c, random_pushes_scale, random_number_of_pushings_button
+	global randomn, randomm, number_of_random_pushings, random_matrix, WIDTH, HEIGHT, const, RANDOMHEIGHT, RANDOMWIDTH, random_const, button_for_checking_random_pushing
+	randomn = n
+	randomm = m
+	number_of_random_pushings = 0
 
-WIDTH = (m+1)*const
-HEIGHT = (n+1)*const
+	random_matrix = []
+	for i in range(n):
+		random_matrix.append([0]*m)
+	const = 500//(max(m,n))
+	random_const = 500//(max(randomm,randomn))
 
-#BUTTONS SCALES CANVAS
+	WIDTH = (m+1)*const
+	HEIGHT = (n+1)*const
+	RANDOMWIDTH = (m+1)*const
+	RANDOMHEIGHT = (n+1)*const
 
-root = Tk()
-c = Canvas(root, width = WIDTH, height = HEIGHT)
-anotherc = Canvas(root, width = 20, height = 255*colorconst)
-but = Button(root, text = "PUSH SAND", bg="white",fg = "black") 
-but2 = Button(root, text = "STOP", bg="white",fg = "black")
-scale1 = Scale(root, orient=VERTICAL, length=510, from_=0, to=510, tickinterval = 50, resolution = 5)
-pushes_scale = Scale(root, orient=HORIZONTAL, length=500, from_=1, to = 30, tickinterval = 2, resolution = 1)
-button1 = Button(root, text="Change sand number", bg="white",fg = "black")
-pushes_button = Button(root, text = 'Change pushes speed', bg="white",fg = "black")
-number_of_pushings_button = Button(root, text = 'Number of pushings: 0; number of random pushings: 0', bg="white",fg = "black")
-button_for_checking_random_pushing = Button(root, text = 'I want to check random pushing', bg="white",fg = "black")
+	root = Tk()
+	c = Canvas(root, width = WIDTH, height = HEIGHT)
+	anotherc = Canvas(root, width = 20, height = 255*colorconst)
+	but = Button(root, text = "PUSH SAND", bg="white",fg = "black") 
+	but_clear = Button(root, text = "CLEAR", bg="white",fg = "black")
+	scale1 = Scale(root, orient=VERTICAL, length=510, from_=0, to=510, tickinterval = 50, resolution = 5)
+	pushes_scale = Scale(root, orient=HORIZONTAL, length=500, from_=1, to = 30, tickinterval = 2, resolution = 1)
+	button1 = Button(root, text="Change sand number", bg="white",fg = "black")
+	pushes_button = Button(root, text = 'Change pushes speed', bg="white",fg = "black")
+	number_of_pushings_button = Button(root, text = 'Number of pushings: 0; number of random pushings: 0', bg="white",fg = "black")
 
-#BINDING
+	#BUTTONS SCALES CANVAS FOR RANDOM
+	random_root = Tk()
+	random_c = Canvas(random_root, width = RANDOMWIDTH, height = RANDOMHEIGHT)
+	button_for_checking_random_pushing = Button(random_root, text = 'Being checked')
 
-c.bind("<Button-1>", add_sand)
-c.bind('<Button-3>', remove_sand)
-but.bind('<Button-1>', loop)
-but.bind('<Button-3>', remove_all)
-but2.bind('<Button-1>', stop_the_loop)
-pushes_button.bind('<Button-1>', get_pushed)
-button1.bind("<Button-1>",getV)
-number_of_pushings_button.bind('<Button-1>', print_number_of_pushings)
-button_for_checking_random_pushing.bind('<Button-1>', randomize_it)
+	#BINDING
 
-#PACKING
-but2.pack(side = 'left')
-but.pack(side = 'left')
-anotherc.pack(side = 'right')
-scale1.pack(side = 'right')
-button1.pack(side = 'right')
-pushes_scale.pack(side = 'bottom')
-pushes_button.pack(side = 'bottom')
-button_for_checking_random_pushing.pack()
-number_of_pushings_button.pack()
-c.pack(side = 'top')
+	c.bind("<Button-1>", add_sand)
+	c.bind('<Button-3>', remove_sand)
+	but.bind('<Button-1>', loop)
+	but.bind('<Button-3>', push_once)
+	but_clear.bind('<Button-1>', remove_all)
+	pushes_button.bind('<Button-1>', get_pushed)
+	button1.bind("<Button-1>",getV)
+	number_of_pushings_button.bind('<Button-1>', print_number_of_pushings)
 
-draw_matrix()
-draw_colors()
+	#PACKING
 
+	but_clear.pack(side = 'left')
+	anotherc.pack(side = 'right')
+	scale1.pack(side = 'right')
+	button1.pack(side = 'right')
+	pushes_scale.pack(side = 'bottom')
+	pushes_button.pack(side = 'bottom')
+	number_of_pushings_button.pack(side = 'top')
+	c.pack(side = 'top')
+	but.pack(side = 'top')
+	random_c.pack()
+	button_for_checking_random_pushing.pack(side = 'bottom')
 
+	draw_matrix(matrix, n, m, c)
+	draw_matrix(random_matrix, randomm, randomn, random_c)
+	draw_colors()
 
-but2.pack(side = 'left')
-anotherc.pack(side = 'right')
-scale1.pack(side = 'right')
-button1.pack(side = 'right')
-pushes_scale.pack(side = 'bottom')
-pushes_button.pack(side = 'bottom')
-but.pack()
-c.pack()
-
-root.mainloop()
+	root.mainloop()
+if mode == 1:
+	pack_for_just_doing_it()
+elif mode == 2:
+	pack_for_checking_random()
