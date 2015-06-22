@@ -53,7 +53,7 @@ def add_sand(event):					#добавляет песок в клетки по щ�
 	y /= const
 	x = int(x) - 1
 	y = int(y) - 1
-	if x < m and y < n:
+	if x < m and y < n and y > 1 and x > 1:
 		#root = Tk()
 		#text = Text(root, height=7, width=7,font='Arial 14',wrap = WORD)
 		#text.pack()
@@ -79,7 +79,7 @@ def remove_sand(event):					#убирает песок из клетки по щ
 	y /= const
 	x = int(x) - 1
 	y = int(y) - 1
-	if x < m and y < n:
+	if x < m and y < n and y > 1 and x > 1:
 		total_sand -= matrix[y][x]
 		matrix[y][x] = 0
 		if mode == 2:
@@ -426,8 +426,8 @@ def pack_for_just_doing_it():			#функция, создающая окно д�
 	global root, c, anotherc, but, but_clear, scale1, pushes_scale, button1, pushes_button, number_of_pushings_button, matrix, n, m, CHECK_FOR_STOPPING_THE_RANDOM_LOOP, CHECK_FOR_STOPPING_THE_LOOP
 	global WIDTH, HEIGHT, const
 	const = 500//(max(m,n))
-	WIDTH = (m+1)*const
-	HEIGHT = (n+1)*const
+	WIDTH = 550
+	HEIGHT = 550
 	root = Tk()
 	c = Canvas(root, width = WIDTH, height = HEIGHT)
 	anotherc = Canvas(root, width = 20, height = 255*colorconst)
@@ -485,10 +485,10 @@ def pack_for_checking_random():			#функция, создающая два о�
 	const = 500//(max(m,n))
 	random_const = 500//(max(randomm,randomn))
 
-	WIDTH = (m+1)*const
-	HEIGHT = (n+1)*const
-	RANDOMWIDTH = (m+1)*const
-	RANDOMHEIGHT = (n+1)*const
+	WIDTH = 550
+	HEIGHT = 550
+	RANDOMWIDTH = 550
+	RANDOMHEIGHT = 550
 
 	root = Tk()
 	c = Canvas(root, width = WIDTH, height = HEIGHT)
@@ -532,7 +532,7 @@ def pack_for_checking_random():			#функция, создающая два о�
 	button_for_checking_random_pushing.pack(side = 'bottom')
 
 	draw_matrix(matrix, n, m, c)
-	draw_matrix(random_matrix, randomm, randomn, random_c)
+	draw_matrix(random_matrix, randomn, randomm, random_c)
 	draw_colors()
 
 	root.mainloop()
